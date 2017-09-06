@@ -1,0 +1,13 @@
+<ncs-package xmlns="http://tail-f.com/ns/ncs-packages">
+  <name>ntool</name>
+  <package-version>1.3</package-version>
+  <description>Tailf NED Tool</description>
+  <ncs-min-version>4.1</ncs-min-version>
+
+  <component>
+    <name>NED Tool Action Handler</name>
+    <callback>
+      <java-class-name>com.tailf.ntool.ntoolAction</java-class-name>
+    </callback>
+  </component>
+</ncs-package>
