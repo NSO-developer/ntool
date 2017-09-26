@@ -1,6 +1,6 @@
 <ncs-package xmlns="http://tail-f.com/ns/ncs-packages">
   <name>ntool</name>
-  <package-version>1.3</package-version>
+  <package-version>1.4</package-version>
   <description>Tailf NED Tool</description>
   <ncs-min-version>4.1</ncs-min-version>
 
