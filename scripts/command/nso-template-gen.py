@@ -300,6 +300,11 @@ class generateCliTemplate:
            os.mkdir(self.path + '/gen/' + self.nedId + '-' + self.version)
 
         try:
+           os.stat(self.path + '/gen/latest')
+        except:
+           os.mkdir(self.path + '/gen/latest')
+
+        try:
            file = open(self.path + '/gen/' + self.nedId + '-' + self.version + '/' + self.template, "w")
 
            outStr = outStr.replace("<config-template xmlns=\"http://tail-f.com/ns/config/1.0\">",
@@ -309,7 +314,12 @@ class generateCliTemplate:
                                  "   -->")
            file.write(outStr)
            file.close()
+
+           file = open(self.path + '/gen/latest/' + self.template, "w")
+           file.write(outStr)
+           file.close()
            progSuccess()
+
         except:
            progFail()
 
@@ -379,6 +389,23 @@ def main(argv):
       progFail()
       exit(0)
    
+   ###
+   # Save the current latest directory as previous if it exists
+   ###
+   try:
+     os.stat("./" + args.package + "/gen")
+   
+     try: 
+       os.stat("./" + args.package + "/gen/latest")
+       os.rename("./" + args.package + "/gen/latest",
+                "./" + args.package + "/gen/previous")
+     except:
+       progFail("failed")
+       exit(0)
+   except:
+  
+
+  
    ###
    # Start generation templates for all cfg files in the cli directory
    ###
