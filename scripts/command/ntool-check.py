@@ -10,16 +10,13 @@
 #
 #
 
+import ncs
 import _ncs
-import _ncs.deprecated.maapi as maapi
+import ncs.maagic as maagic
 import sys
+import os
 import argparse
 import re
-
-_V = _ncs.Value
-_TV = _ncs.TagValue
-_XT = _ncs.XmlTag
-
 
 def print_ncs_command_details():
     print """
@@ -132,7 +129,7 @@ def verify_line(pc, dev_type):
         return True
 
 
-def verify_command_file(maapi_sock, cmd_str, file_name, device_type, verbose):
+def verify_command_file(root, cmd_str, file_name, device_type, verbose):
     if device_type == "iosxr":
         dev_type = "cisco-ios-xr"
     elif device_type == "nexus":
@@ -197,13 +194,12 @@ def verify_command_file(maapi_sock, cmd_str, file_name, device_type, verbose):
             cfg_lines = pc.splitlines()
             if verify_line(pc, dev_type):
                 while res != "verfied":
-                    result = _ncs.maapi.request_action(sock=maapi_sock,
-                                                       params=[
-                                                           _TV(_XT(436315975, 1723459864), _V(device_type)),
-                                                           _TV(_XT(436315975, 542126253), _V(pc))
-                                                       ], hashed_ns=0,
-                                                       path='/ntool:ntool-commands/ntool:verify')
-                    res = result[0].v
+                    action = root.ntool__ntool_commands.verify
+                    inp = action.get_input()
+                    inp.device_type = device_type
+                    inp.command_list = pc
+                    aresult = action(inp)
+                    res = aresult.result
                     if res != "verfied":
                         line_num = int(extract_line_num(res))
                         pc = trim_config_lines(cfg_lines, line_num)
@@ -216,7 +212,6 @@ def verify_command_file(maapi_sock, cmd_str, file_name, device_type, verbose):
 def main(argv):
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--command", action='store_true', dest='command', help="command")
-    parser.add_argument("-s", "--standalone", action='store_true', dest='standalone', help="standalone")
     parser.add_argument("-f", "--file", action='store', dest='file', help="Configuration file to verify")
     parser.add_argument("-l", "--line", action='store', dest='line', help="line")
     parser.add_argument("-t", "--type", action='store', dest='type', help="ios, iosxr, nexus, arista")
@@ -231,15 +226,24 @@ def main(argv):
         print " "
         print "  Verifying [%s] command(s) sequence...." % args.type
 
-    if args.standalone:
-        with maapi.wctx.connect(ip='127.0.0.1', port=_ncs.NCS_PORT) as c:
-            with maapi.wctx.session(c, 'admin') as s:
-                with maapi.wctx.trans(s, readWrite=_ncs.READ_WRITE) as t:
-                    verify_command_file(t.sock, args.line, args.file, args.type, args.verbose)
-    else:
-        t = maapi.scripts.attach_and_trans()
-        verify_command_file(t.sock, args.line, args.file, args.type, args.verbose)
+    print "  Verifying [%s] command(s) sequence...." % args.type
+    ##
+    # Read environment variables
+    ##
+    port = int(os.getenv('NCS_IPC_PORT', _ncs.NCS_PORT))
+    usid = int(os.getenv('NCS_MAAPI_USID'))
+    th = int(os.getenv('NCS_MAAPI_THANDLE'))
 
+    ###
+    # Attach to current transaction
+    ###
+    maapi = ncs.maapi.Maapi(ip='127.0.0.1', port = port)
+    maapi.attach(th, usid=usid)
+    root = maagic.get_root(maapi, shared=False)
+       
+    verify_command_file(root, args.line, args.file, args.type, args.verbose)
+
+    print "  Verification completed"
     if args.verbose:
         print "  Verification completed"
         print " "

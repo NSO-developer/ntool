@@ -10,18 +10,15 @@
 #
 #
 
-import _ncs 
-import _ncs.deprecated.maapi as maapi
+import ncs
+import _ncs
+import ncs.maagic as maagic
 import sys
 import argparse
 import os
 import subprocess
 import socket
 import re
-
-_V = _ncs.Value
-_TV = _ncs.TagValue
-_XT = _ncs.XmlTag
 
 def print_ncs_command_details():
         print """
@@ -77,7 +74,7 @@ def print_ncs_command_details():
 
         """
 
-def createTemplateFile(maapiSock, cmdStr, fileName, outFile, deviceType, templateType, verbose):
+def createTemplateFile(root, cmdStr, fileName, outFile, deviceType, templateType, verbose):
 
       if (deviceType == "iosxr"):
         devType = "cisco-ios-xr"
@@ -122,22 +119,18 @@ def createTemplateFile(maapiSock, cmdStr, fileName, outFile, deviceType, templat
         pCmds = pCmds + cmds
       
       print "   Executing template create action...."
-      result = _ncs.maapi.request_action(sock = maapiSock,
-                params = [
-                           _TV(_XT(436315975, 2040883914), _V(templateType)),
-                           _TV(_XT(436315975, 1723459864), _V(deviceType)),
-                           _TV(_XT(436315975, 542126253), _V(pCmds))
-                        ], 
-                hashed_ns = 0,
-                path = '/ntool:ntool-commands/ntool:create-template')
-   
-      #if (result[0].v):
-      #  print "   Template created"
+
+      action = root.ntool__ntool_commands.create_template
+      inp = action.get_input()
+      inp.type = 'config'
+      inp.device_type = deviceType
+      inp.command_list = pCmds
+      res = action(inp)
+      outStr = res.result
 
       if (outFile):
         print "   Saving output to file %s" % outFile
         outlines = []
-        outStr = str(result[0].v)
         outlines = outStr.splitlines()
         file = open(outFile, "w")
         for outStr in outlines:
@@ -145,13 +138,12 @@ def createTemplateFile(maapiSock, cmdStr, fileName, outFile, deviceType, templat
             file.write(outStr + "\n")
         file.close()
       else :
-        print result[0].v
+        print outStr
 
 def main(argv):
 
    parser = argparse.ArgumentParser()
    parser.add_argument("-c", "--command", action='store_true', dest='command', help="command")
-   parser.add_argument("-s", "--standalone", action='store_true', dest='standalone', help="standalone")
    parser.add_argument("-f", "--file", action='store', dest='file', help="file")
    parser.add_argument("-o", "--ofile", action='store', dest='ofile', help="ofile")
    parser.add_argument("-l", "--line", action='store', dest='line', help="line")
@@ -166,14 +158,21 @@ def main(argv):
    print " "
    print "   Creating template  [%s] ...." % args.type
 
-   if (args.standalone) :
-     with maapi.wctx.connect(ip = '127.0.0.1', port = _ncs.NCS_PORT) as c :
-        with maapi.wctx.session(c, 'admin') as s :
-            with maapi.wctx.trans(s, readWrite = _ncs.READ_WRITE) as t :
-                  createTemplateFile(t.sock, args.line, args.file, args.ofile, args.type, args.template, args.verbose)
-   else :
-      t = maapi.scripts.attach_and_trans()
-      createTemplateFile(t.sock, args.line, args.file, args.ofile, args.type, args.template, args.verbose)
+   ##
+   # Read environment variables
+   ##
+   port = int(os.getenv('NCS_IPC_PORT', _ncs.NCS_PORT))
+   usid = int(os.getenv('NCS_MAAPI_USID'))
+   th = int(os.getenv('NCS_MAAPI_THANDLE'))
+
+   ###
+   # Attach to current transaction
+   ###
+   maapi = ncs.maapi.Maapi(ip='127.0.0.1', port = port)
+   maapi.attach(th, usid=usid)
+   root = maagic.get_root(maapi, shared=False)
+   
+   createTemplateFile(root, args.line, args.file, args.ofile, args.type, args.template, args.verbose)
     
    print "   Template create completed"
    print " "

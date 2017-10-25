@@ -403,9 +403,12 @@ def main(argv):
        progFail("failed")
        exit(0)
    except:
-  
+     try:
+       os.stat("./" + args.package + "/gen")
+     except:
+       progFail("failed")
+       exit(0)
 
-  
    ###
    # Start generation templates for all cfg files in the cli directory
    ###
