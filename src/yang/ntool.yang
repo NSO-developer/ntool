@@ -1,4 +1,4 @@
-module tailf-ntool {
+module ntool {
   namespace "http://com/tailf/ntool";
   prefix ntool;
 

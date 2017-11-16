@@ -66,6 +66,7 @@ class generateCliTemplate:
     def generateTemplate(self):
         "Generate template from .cfg file"
 
+        print ""
         progressDisplay("Parsing [%s]" % (self.file))
    
         try:
@@ -90,9 +91,6 @@ class generateCliTemplate:
             print "\t\t%-10s Default [%s]" % (k,v)
           print
         
-        progressDisplay("Parsing [%s]" % (self.file))
-        progSuccess("Completed")
-
         ###
         # Now substitue in variable names into CLI 
         # command output
@@ -143,6 +141,9 @@ class generateCliTemplate:
 
         progressDisplay("Saving template file [%s]" % (self.template))
         self.saveTemplate(outStr)
+
+        progressDisplay("Parsing [%s]" % (self.file))
+        progSuccess("Completed")
 
     def addTags(self, outStr):
         "Add XML tag substituion to output file"
@@ -293,7 +294,7 @@ class generateCliTemplate:
           os.stat(self.path + '/gen')
         except:
           os.mkdir(self.path + '/gen')
-          progFail()
+          
         try:
            os.stat(self.path + '/gen/' + self.nedId + '-' + self.version)
         except:
@@ -314,7 +315,6 @@ class generateCliTemplate:
                                  "   -->")
            file.write(outStr)
            file.close()
-
            file = open(self.path + '/gen/latest/' + self.template, "w")
            file.write(outStr)
            file.close()
@@ -400,15 +400,10 @@ def main(argv):
        os.rename("./" + args.package + "/gen/latest",
                 "./" + args.package + "/gen/previous")
      except:
-       progFail("failed")
-       exit(0)
+      pass
    except:
-     try:
-       os.stat("./" + args.package + "/gen")
-     except:
-       progFail("failed")
-       exit(0)
-
+      pass 
+   
    ###
    # Start generation templates for all cfg files in the cli directory
    ###
