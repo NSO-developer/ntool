@@ -200,7 +200,7 @@ class generateCliTemplate:
         "Prepare commands for template creation "
 
         outlines = []
-        vp = re.compile("{\$([a-zA-Z0-9\-\_]*)=([a-zA-Z0-9\-\._]*)}|{\$([a-zA-Z0-9\-\_)]*)}")
+        vp = re.compile("{\$([a-zA-Z0-9\-\_]*)=([a-zA-Z0-9\-\._\/]*)}|{\$([a-zA-Z0-9\-\_\/)]*)}")
         for line in self.lines:
       
           if not line:
@@ -238,7 +238,7 @@ class generateCliTemplate:
         ###
         # Search for all variables and save in a list
         ###
-        vp = re.compile("{\$([a-zA-Z0-9\-\_]*)=([a-zA-Z0-9\-\._]*)}|{\$([a-zA-Z0-9\-\_)]*)}")
+        vp = re.compile("{\$([a-zA-Z0-9\-\_]*)=([a-zA-Z0-9\-\._\/]*)}|{\$([a-zA-Z0-9\-\_\/)]*)}")
         for line in self.lines:
           mv = vp.findall(line)
           if mv:
