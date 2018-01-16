@@ -84,13 +84,9 @@ class generateCliTemplate:
         print "\t\tNED Version: %s\n" % (self.version)
      
         vars = self.extractVars()
-        if self.debug:
-          print "\t\tTemplate Variables"
-          print "\t\t------------------"
-          for k,v in vars.items():
-            print "\t\t%-10s Default [%s]" % (k,v)
-          print
         
+        self.varsubs = self.extractVarSub()
+
         ###
         # Now substitue in variable names into CLI 
         # command output
@@ -139,6 +135,9 @@ class generateCliTemplate:
        
         self.displayStr("Template with constraints added", outStr)
 
+        outStr = self.addVarSubs(outStr)
+        self.displayStr("Template with variable substituion(s) added", outStr)
+
         progressDisplay("Saving template file [%s]" % (self.template))
         self.saveTemplate(outStr)
 
@@ -180,6 +179,14 @@ class generateCliTemplate:
           update.append(newLine)
     
         return "\n".join(update)
+
+    def addVarSubs(self, outStr):
+        "Add variable names back to XML template"
+
+        for k,v in self.varsubs.items():
+          outStr = outStr.replace("{$" + k + "}", "{" + v + "}")
+           
+        return outStr
 
     def addVars(self, vars, outStr):
         "Add variable names back to XML template"
@@ -247,17 +254,53 @@ class generateCliTemplate:
                  vars[m[0]] = m[1]
                else:
                  vars[m[2]] = "none"
+
+        if self.debug:
+          print "\t\tTemplate Variables"
+          print "\t\t----------------------------"
+          for k,v in vars.items():
+            print "\t\t%-20s [%s]" % (k,v)
+          print         
+        
         return vars
 
     def extractTags(self):
         "Extract XML TAG modifications from cfg file"
+        mod = '+TAGMOD:'
         tagList = {}
         for line in self.lines:
-           if line.startswith("+TAGMOD:"):
-              subStr = line.replace("+TAGMOD:", "")
+           if line.startswith(mod):
+              subStr = line.replace(mod, "")
               tags = subStr.split("::")
               tagList[tags[0]] = tags[1]
+        
+        if self.debug:
+          print "\t\tXML Tag Modifications(s)"
+          print "\t\t----------------------------"
+          for k,v in tagList.items():
+            print "\t\t%-20s [%s]" % (k,v)
+          print  
+
         return tagList
+
+    def extractVarSub(self):
+        "Extract variable substitution modifications from cfg file"
+        varSubList = {}
+        mod = '+VARMOD:'
+        for line in self.lines:
+           if line.startswith(mod):
+              subStr = line[len(mod):]
+              tags = subStr.split("::")
+              varSubList[tags[0]] = tags[1]
+
+        if self.debug:
+          print "\t\tVariable Substituion Modifications(s)"
+          print "\t\t-------------------------------------"
+          for k,v in varSubList.items():
+            print "\t\t%-20s [%s]" % (k,v)
+          print
+        
+        return varSubList
 
     def extractNED(self):
         "Read the NED type from the cfg file"
@@ -275,8 +318,8 @@ class generateCliTemplate:
          if not self.debug:
             return
          print ""
-         print "\t    %s" % (msg) 
-         print "\t    -----------------------------------"
+         print "\t       %s" % (msg) 
+         print "\t       -----------------------------------"
          lines = displayStr.split("\n")
          for line in lines:
             print "\t       %s" % (line)

@@ -57,6 +57,9 @@ variables                   Variables are denoted by {$XXXXX}
 +TAGMOD:tagname, value        - TAGMOD can be inserted into the cfg file
                                 in order to substitue a value for a given
                                 element in the template.
++VARMOD:variable name::value  - If you need to generate templates for model-to-model
+                                service you can use the VARMOD to subsitute out
+                                variable names for a model name
 
 Consider the following example:
 
