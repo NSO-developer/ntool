@@ -4,11 +4,11 @@ A few tools to help with verifying CLI configurations and generating NSO templat
 
 # Purpose
 
-Ntool is a collection of actions and NSO CLI scripts (utilizing plug-and-play) that 
+Ntool is a collection of actions and NSO CLI scripts (utilizing plug-and-play) that
 are useful for verifying a particular CLI configuration and also generation of NSO
 configuration templates using NSO.
 
-* The verify option allows the user to verify a set of CLI commands are supported 
+* The verify option allows the user to verify a set of CLI commands are supported
   by a specific NSO network element driver (NED)
 
 * The template command allows the user to generate a deivice or config template
@@ -42,14 +42,14 @@ This option can be used to autogenerate if not entire, partial template files
 for NSO service packages. The tool when called will search for a particular
 directory within the NSO package called 'cli'. Each file within the CLI directory
 will be a config file which will contain a set of variables and CLI
-commands. Ntool will parse the .cfg files and generate a template based on 
-the loaded NED version into a 'gen' directory. 
- 
+commands. Ntool will parse the .cfg files and generate a template based on
+the loaded NED version into a 'gen' directory.
+```
 .cfg files have the following format:
 +NED:cisco-iosxr            First line of every .cfg file is the NED
                             package name
 variables                   Variables are denoted by {$XXXXX}
-                              - Variables can be assigned a unique  
+                              - Variables can be assigned a unique
                                 default value for template generation
                               - Variables which require a null check
                                 in the XML template can be assigned
@@ -60,11 +60,11 @@ variables                   Variables are denoted by {$XXXXX}
 +VARMOD:variable name::value  - If you need to generate templates for model-to-model
                                 service you can use the VARMOD to subsitute out
                                 variable names for a model name
-
+```
 Consider the following example:
 
 bridge_group.cfg:
-
+```
 +NED:cisco-iosxr            First line of every .cfg file is the NED required
 
 l2vpn
@@ -84,12 +84,12 @@ l2vpn
    exit
   exit
 exit
-
+```
 
 ## Verify
 
 Any "**" means the the specific command isn't supported
-
+```
 admin@ncs> ntool verify type iosxr file /Users/dan/Desktop/router_cfg.txt
    mpls ldp
     log
@@ -112,11 +112,12 @@ admin@ncs> ntool verify type iosxr file /Users/dan/Desktop/router_cfg.txt
       !
      !
     !
-
+```
 ## Template
 
 You can also generate a template directory from a CLI command if necessary
 Using the ospf.text file contents:
+```
   router ospf 1
    nsr
    router-id 1.1.0.1
@@ -156,8 +157,9 @@ Using the ospf.text file contents:
      cost 60000
     !
   !
-
-admin@ncs> ntool template type iosxr template-type config file /Users/Dan/Desktop/ospf.text                      
+```
+```
+admin@ncs> ntool template type iosxr template-type config file /Users/Dan/Desktop/ospf.text
 
    Creating template  [iosxr] ....
    Reading input command file /Users/Dan/Desktop/ospf.text
@@ -276,4 +278,4 @@ admin@ncs> ntool template type iosxr template-type config file /Users/Dan/Deskto
 </config-template>
 
    Template create completed
-
+```
