@@ -18,6 +18,10 @@ import os
 import argparse
 import re
 
+prefixList = {'cisco-ios': 'ios', 'cisco-iosxr' : 'cisco-ios-xr', 'arista-dcs' : 'dcs',
+              'adva-825' : 'adva-825', 'adtran-aos' : 'adtran-aos', 'alu-sr': 'alu',
+              'cisco-nx' : 'nx', 'unknown' : 'unknown'}
+
 def print_ncs_command_details():
     print """
         begin command
@@ -38,7 +42,7 @@ def print_ncs_command_details():
           name: type
           presence: mandatory
           flag: -t
-          help: ios, iosxr, nexus, arista
+          help: cisco-ios, cisco-iosxr, cisco-nx, arista-dcs, alu-sr
         end
 
         begin param
@@ -130,14 +134,12 @@ def verify_line(pc, dev_type):
 
 
 def verify_command_file(root, cmd_str, file_name, device_type, verbose):
-    if device_type == "iosxr":
-        dev_type = "cisco-ios-xr"
-    elif device_type == "nexus":
-        dev_type = "nx"
-    elif device_type == "arista":
-        dev_type = "dcs"
+
+    if (device_type in  prefixList):
+       dev_type = prefixList[device_type]
     else:
-        dev_type = device_type
+       print "****** UNKNOWN DEVICE TYPE ***********"
+       exit(0)
 
     cmd_list = []
     if cmd_str:
@@ -188,6 +190,10 @@ def verify_command_file(root, cmd_str, file_name, device_type, verbose):
 
     # Loop through all commands and verify them
     index = 0
+    value = 'iosxr'
+    if device_type != 'cisco-iosxr':
+       value = 'ios'
+
     for pc in process_cmds:
         if pc != "":
             res = ""
@@ -196,7 +202,7 @@ def verify_command_file(root, cmd_str, file_name, device_type, verbose):
                 while res != "verfied":
                     action = root.ntool__ntool_commands.verify
                     inp = action.get_input()
-                    inp.device_type = device_type
+                    inp.device_type = value
                     inp.command_list = pc
                     aresult = action(inp)
                     res = aresult.result
@@ -214,7 +220,7 @@ def main(argv):
     parser.add_argument("-c", "--command", action='store_true', dest='command', help="command")
     parser.add_argument("-f", "--file", action='store', dest='file', help="Configuration file to verify")
     parser.add_argument("-l", "--line", action='store', dest='line', help="line")
-    parser.add_argument("-t", "--type", action='store', dest='type', help="ios, iosxr, nexus, arista")
+    parser.add_argument("-t", "--type", action='store', dest='type', help="cisco-ios, cisco-iosxr, cisco-nx, arista-dcs")
     parser.add_argument("-v", "--verbose", action='store_true', dest='verbose', help="verbose")
     args = parser.parse_args()
 
