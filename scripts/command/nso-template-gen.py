@@ -20,9 +20,27 @@ from collections import Counter
 
 step = 1
 
-prefixList = {'cisco-ios': 'ios', 'cisco-iosxr' : 'cisco-ios-xr', 'arista-dcs' : 'dcs',
-              'adva-825' : 'adva-825', 'adtran-aos' : 'adtran-aos', 'alu-sr': 'alu',
-              'unknown' : 'unknown'}
+# prefixList = {'cisco-ios': 'ios', 'cisco-iosxr' : 'cisco-ios-xr', 'arista-dcs' : 'dcs',
+#               'adva-825' : 'adva-825', 'adtran-aos' : 'adtran-aos', 'alu-sr': 'alu','huawei-vrp': 'vrp',
+#               'unknown' : 'unknown'}
+
+def getPrefixList():
+    m = ncs.maapi.Maapi()
+    m.start_user_session('admin', 'system', [])
+    trans = m.start_read_trans()
+    root = ncs.maagic.get_root(trans)
+    capa_list = []
+    for device in root.ncs__devices.device:
+        for capa in device.capability:
+            capa_list.append((capa.uri,str(capa.module)))
+    capa_dict = dict(capa_list)
+
+    tmp_prefix_list = []
+    for models in root.tfnm__ncs_state.loaded_data_models.data_model:
+        if capa_dict.get(models.namespace):
+          tmp_prefix_list.append((capa_dict.get(models.namespace),models.prefix))
+
+    return dict(tmp_prefix_list)
 
 def print_ncs_command_details():
         print """
@@ -53,7 +71,7 @@ def print_ncs_command_details():
 class generateCliTemplate:
 
     def __init__(self, m, th, root, file, path, debug):
-      
+
         self.maapi = m
         self.th = th
         self.file = file
@@ -63,12 +81,12 @@ class generateCliTemplate:
         self.debug = debug
         return
 
-    def generateTemplate(self):
+    def generateTemplate(self, prefixList):
         "Generate template from .cfg file"
 
         print ""
         progressDisplay("Parsing [%s]" % (self.file))
-   
+
         try:
           with open(self.path + "/cli/" + self.file) as f:
             self.lines = f.read().splitlines()
@@ -77,72 +95,77 @@ class generateCliTemplate:
             progFail()
 
         self.nedId = self.extractNED()
-        self.extractNedVersion()
-        self.tags = self.extractTags()
-       
-        print "\n\t\tNED Type:    %s" % (self.nedId)
-        print "\t\tNED Version: %s\n" % (self.version)
-     
-        vars = self.extractVars()
-        
-        self.varsubs = self.extractVarSub()
 
-        ###
-        # Now substitue in variable names into CLI 
-        # command output
-        ###
-        outlines = self.substituteVars(prefixList[self.nedId])
-   
-        # Create a string out of list
-        cmdString = '\n'.join(outlines)
-        deviceType = 'iosxr'
-        if self.nedId != 'cisco-iosxr':
-          deviceType = 'ios'
-  
-        self.displayStr("CLI Commands", cmdString)
+        if self.nedId == 'unknown':
+          print('\tNo NED specified in the configuration file ' + str(self.file) + '\n')
+        else:
+          self.extractNedVersion()
+          self.tags = self.extractTags()
 
-        ###
-        # Generate the template from the CLI commands
-        ###
-        progressDisplay("Generating template from [%s]" % (self.file))
-        outStr = ""
-        try:
-          action = self.root.ntool__ntool_commands.create_template
-          inp = action.get_input()
-          inp.type = 'config'
-          inp.device_type = deviceType
-          inp.command_list = cmdString
-          res = action(inp)
-          outStr = res.result
-          progSuccess()
-        except:
-          progDisplay()
+          print "\n\t\tNED Type:    %s" % (self.nedId)
+          print "\t\tNED Version: %s\n" % (self.version)
 
-        ###
-        # Add the variables back into the template subsituting
-        # them for the initial values
-        ###
-        self.displayStr("Raw template output", outStr)
-        outStr = self.addVars(vars, outStr)
-        self.displayStr("Template after variable substitution", outStr)
+          vars = self.extractVars()
 
-        ###
-        # Modify the template output to account for the TAGMOD
-        # statements in the .cfg file
-        ###
-        outStr = self.addConstraints(vars, outStr)
-        outStr = self.addTags(outStr)
-       
-        self.displayStr("Template with constraints added", outStr)
+          self.varsubs = self.extractVarSub()
 
-        outStr = self.addVarSubs(outStr)
-        self.displayStr("Template with variable substituion(s) added", outStr)
+          ###
+          # Now substitue in variable names into CLI
+          # command output
+          ###
 
-        progressDisplay("Saving template file [%s]" % (self.template))
-        self.saveTemplate(outStr)
+          outlines = self.substituteVars(prefixList[self.nedId])
 
-        progressDisplay("Parsing [%s]" % (self.file))
-        progSuccess("Completed")
+          # Create a string out of list
+          cmdString = '\n'.join(outlines)
+          deviceType = 'iosxr'
+          if self.nedId != 'cisco-iosxr':
+            deviceType = 'ios'
+
+          self.displayStr("CLI Commands", cmdString)
+
+          ###
+          # Generate the template from the CLI commands
+          ###
+          progressDisplay("Generating template from [%s]" % (self.file))
+          outStr = ""
+          try:
+            action = self.root.ntool__ntool_commands.create_template
+            inp = action.get_input()
+            inp.type = 'config'
+            inp.device_type = deviceType
+            inp.command_list = cmdString
+            res = action(inp)
+            outStr = res.result
+            progSuccess()
+          except:
+            progDisplay()
+
+          ###
+          # Add the variables back into the template subsituting
+          # them for the initial values
+          ###
+          self.displayStr("Raw template output", outStr)
+          outStr = self.addVars(vars, outStr)
+          self.displayStr("Template after variable substitution", outStr)
+
+          ###
+          # Modify the template output to account for the TAGMOD
+          # statements in the .cfg file
+          ###
+          outStr = self.addConstraints(vars, outStr)
+          outStr = self.addTags(outStr)
+
+          self.displayStr("Template with constraints added", outStr)
+
+          outStr = self.addVarSubs(outStr)
+          self.displayStr("Template with variable substituion(s) added", outStr)
+
+          progressDisplay("Saving template file [%s]" % (self.template))
+          self.saveTemplate(outStr)
+
+          progressDisplay("Parsing [%s]" % (self.file))
+          progSuccess("Completed")
 
     def addTags(self, outStr):
         "Add XML tag substituion to output file"
@@ -150,21 +173,21 @@ class generateCliTemplate:
         update = []
         for line in outlines:
           newLine = line
-          for k,v in self.tags.items(): 
+          for k,v in self.tags.items():
                if "<" + k + ">" in line:
-                 newLine = newLine.replace("<" + k + ">", 
+                 newLine = newLine.replace("<" + k + ">",
                                            "<" + k + " " + v + ">")
                elif "<" + k + "/>" in line:
-                 newLine = newLine.replace("<" + k + "/>", 
+                 newLine = newLine.replace("<" + k + "/>",
                                            "<" + k + " " + v + "/>")
           if (line != ""):
             update.append(newLine)
-    
-        return "\n".join(update)       
+
+        return "\n".join(update)
 
     def addConstraints(self, vars, outStr):
         "Add when constraints to XML output file "
-        
+
         outlines = outStr.split('\n')
         update = []
 
@@ -172,12 +195,12 @@ class generateCliTemplate:
           newLine = line
           for k,v in vars.items():
 
-             if v == 'nonull':   
+             if v == 'nonull':
                if ">{$" + k + "}<" in line:
-                 newLine = newLine.replace(">{$" + k + "}<", 
+                 newLine = newLine.replace(">{$" + k + "}<",
                                         " when=\"{$" + k + "!=\'\'}\">{$" + k + "}<")
           update.append(newLine)
-    
+
         return "\n".join(update)
 
     def addVarSubs(self, outStr):
@@ -185,22 +208,22 @@ class generateCliTemplate:
 
         for k,v in self.varsubs.items():
           outStr = outStr.replace("{$" + k + "}", "{" + v + "}")
-           
+
         return outStr
 
     def addVars(self, vars, outStr):
         "Add variable names back to XML template"
 
         for k,v in vars.items():
-
+           print('k:' + k + ' v:' + v)
            if v == 'none':
-             outStr = outStr.replace(k, "{$" + k + "}")
+             outStr = outStr.replace("$" + k, "{$" + k + "}")
            elif v == 'nonull':
-             outStr = outStr.replace(k, "{$" + k + "}")
+             outStr = outStr.replace("$" + k, "{$" + k + "}")
            else:
              #outStr = outStr.replace(">" + v + "<", ">{$" + k + "}<")
              outStr = outStr.replace(v, "{$" + k + "}")
-
+        #print('OUT: ' + outStr)
         return outStr
 
     def substituteVars(self, prefix):
@@ -209,7 +232,7 @@ class generateCliTemplate:
         outlines = []
         vp = re.compile("{\$([a-zA-Z0-9\-\_]*)=([a-zA-Z0-9\-\._\/]*)}|{\$([a-zA-Z0-9\-\_\/)]*)}")
         for line in self.lines:
-      
+
           if not line:
             continue
 
@@ -236,11 +259,13 @@ class generateCliTemplate:
                outline = prefix + ':' + outline
 
           outlines.append(outline)
+        # for line in outlines:
+        #   print('LINES: ' + line)
         return outlines
 
     def extractVars(self):
         "Read through file contents and extract variables"
-    
+
         vars = {}
         ###
         # Search for all variables and save in a list
@@ -260,8 +285,8 @@ class generateCliTemplate:
           print "\t\t----------------------------"
           for k,v in vars.items():
             print "\t\t%-20s [%s]" % (k,v)
-          print         
-        
+          print
+
         return vars
 
     def extractTags(self):
@@ -273,13 +298,13 @@ class generateCliTemplate:
               subStr = line.replace(mod, "")
               tags = subStr.split("::")
               tagList[tags[0]] = tags[1]
-        
+
         if self.debug:
           print "\t\tXML Tag Modifications(s)"
           print "\t\t----------------------------"
           for k,v in tagList.items():
             print "\t\t%-20s [%s]" % (k,v)
-          print  
+          print
 
         return tagList
 
@@ -299,13 +324,13 @@ class generateCliTemplate:
           for k,v in varSubList.items():
             print "\t\t%-20s [%s]" % (k,v)
           print
-        
+
         return varSubList
 
     def extractNED(self):
         "Read the NED type from the cfg file"
         nedId = self.lines[0]
-        np = re.compile("\+NED:([a-zA-Z0-9\-_]*)")    
+        np = re.compile("\+NED:([a-zA-Z0-9\-_]*)")
         m = np.search(nedId)
         if m:
           if m.group(1):
@@ -318,7 +343,7 @@ class generateCliTemplate:
          if not self.debug:
             return
          print ""
-         print "\t       %s" % (msg) 
+         print "\t       %s" % (msg)
          print "\t       -----------------------------------"
          lines = displayStr.split("\n")
          for line in lines:
@@ -337,7 +362,7 @@ class generateCliTemplate:
           os.stat(self.path + '/gen')
         except:
           os.mkdir(self.path + '/gen')
-          
+
         try:
            os.stat(self.path + '/gen/' + self.nedId + '-' + self.version)
         except:
@@ -419,7 +444,9 @@ def main(argv):
    maapi.attach(th, usid=usid)
    root = maagic.get_root(maapi, shared=False)
 
-   print "\nGenerating Service Configuration Template(s)\n " 
+   prefixList = getPrefixList()
+
+   print "\nGenerating Service Configuration Template(s)\n "
 
    progressDisplay("Changing directory to package directory")
    os.chdir("./packages")
@@ -431,22 +458,22 @@ def main(argv):
    else:
       progFail()
       exit(0)
-   
+
    ###
    # Save the current latest directory as previous if it exists
    ###
    try:
      os.stat("./" + args.package + "/gen")
-   
-     try: 
+
+     try:
        os.stat("./" + args.package + "/gen/latest")
        os.rename("./" + args.package + "/gen/latest",
                 "./" + args.package + "/gen/previous")
      except:
       pass
    except:
-      pass 
-   
+      pass
+
    ###
    # Start generation templates for all cfg files in the cli directory
    ###
@@ -454,8 +481,8 @@ def main(argv):
       if file.startswith("."):
         continue
       genTmp = generateCliTemplate(maapi, th, root, file, "./" + args.package, args.debug)
-      genTmp.generateTemplate()
+      genTmp.generateTemplate(prefixList)
 
-   print "\nCompleted\n " 
+   print "\nCompleted\n "
 if __name__ == '__main__' :
     main(sys.argv[1:])
