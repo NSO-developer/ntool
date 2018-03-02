@@ -20,11 +20,12 @@ from collections import Counter
 
 step = 1
 
-# prefixList = {'cisco-ios': 'ios', 'cisco-iosxr' : 'cisco-ios-xr', 'arista-dcs' : 'dcs',
-#               'adva-825' : 'adva-825', 'adtran-aos' : 'adtran-aos', 'alu-sr': 'alu','huawei-vrp': 'vrp',
-#               'unknown' : 'unknown'}
+prefixList = {'cisco-ios': 'ios', 'cisco-iosxr' : 'cisco-ios-xr', 'arista-dcs' : 'dcs',
+              'adva-825' : 'adva-825', 'adtran-aos' : 'adtran-aos', 'alu-sr': 'alu','huawei-vrp': 'vrp',
+              'unknown' : 'unknown'}
 
 def getPrefixList():
+    global prefixList
     m = ncs.maapi.Maapi()
     m.start_user_session('admin', 'system', [])
     trans = m.start_read_trans()
@@ -35,12 +36,11 @@ def getPrefixList():
             capa_list.append((capa.uri,str(capa.module)))
     capa_dict = dict(capa_list)
 
-    tmp_prefix_list = []
     for models in root.tfnm__ncs_state.loaded_data_models.data_model:
         if capa_dict.get(models.namespace):
-          tmp_prefix_list.append((capa_dict.get(models.namespace),models.prefix))
+          prefixList[capa_dict.get(models.namespace)] = models.prefix
 
-    return dict(tmp_prefix_list)
+    return
 
 def print_ncs_command_details():
         print """
@@ -215,7 +215,6 @@ class generateCliTemplate:
         "Add variable names back to XML template"
 
         for k,v in vars.items():
-           print('k:' + k + ' v:' + v)
            if v == 'none':
              outStr = outStr.replace("$" + k, "{$" + k + "}")
            elif v == 'nonull':
@@ -223,7 +222,6 @@ class generateCliTemplate:
            else:
              #outStr = outStr.replace(">" + v + "<", ">{$" + k + "}<")
              outStr = outStr.replace(v, "{$" + k + "}")
-        #print('OUT: ' + outStr)
         return outStr
 
     def substituteVars(self, prefix):
@@ -444,8 +442,7 @@ def main(argv):
    maapi.attach(th, usid=usid)
    root = maagic.get_root(maapi, shared=False)
 
-   prefixList = getPrefixList()
-
+   getPrefixList()
    print "\nGenerating Service Configuration Template(s)\n "
 
    progressDisplay("Changing directory to package directory")
