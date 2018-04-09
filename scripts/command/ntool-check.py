@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 # Copyright 2014 Tail-f Systems
 #
 

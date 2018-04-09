@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/env python
 # Name: nso-template-gen.py
 #
 # Author: Dan Sullivan
