@@ -48,7 +48,7 @@ def print_ncs_command_details():
           words:any
           presence: optional
           flag: -l
-          help: Comannd to parse
+          help: Command to parse
         end
 
         begin param
@@ -74,28 +74,36 @@ def print_ncs_command_details():
 
         """
 
-def createTemplateFile(root, cmdStr, fileName, outFile, deviceType, templateType, verbose):
+def createTemplateFile(root, cmd_str, file_name, out_file, device_type, template_type, verbose):
+      if not cmd_str and not file_name:
+          print "  syntax error: needs either command or file input"
+          exit(0)
 
-      if (deviceType == "iosxr"):
+      if not cmd_str and not os.path.isfile(file_name):
+          print "  syntax error: cant find file " + file_name
+          print "  current directory: " + os.getcwd()
+          exit(0)
+
+      if (device_type == "iosxr"):
         devType = "cisco-ios-xr"
-      elif (deviceType == "nexus"):
+      elif (device_type == "nexus"):
         devType = "nx"
-      elif (deviceType == "arista"):
+      elif (device_type == "arista"):
         devType = "dcs"
       else:
-        devType = deviceType
+        devType = device_type
 
       cmdList = []
-      if (cmdStr):
-        cmdList = cmdStr.splitlines()
+      if (cmd_str):
+        cmdList = cmd_str.splitlines()
         index = 0
         for cmd in cmdList:
             cmdList[index] = cmdList[index] + "\n"
             index = index + 1
       else :
-        print "   Reading input command file %s" % fileName
-     
-        with open(fileName, "r") as ins:
+        print "   Reading input command file %s" % file_name
+
+        with open(file_name, "r") as ins:
           for line in ins:
            cmdList.append(line)
       ####
@@ -109,7 +117,7 @@ def createTemplateFile(root, cmdStr, fileName, outFile, deviceType, templateType
                cmdList[index] = cmdList[index].replace("no ", "no " + devType + ":", 3)
              else :
                cmdList[index] = devType + ":" + cmdList[index]
-          index = index + 1 
+          index = index + 1
       ####
       ## Loop through all build a single string
       ####
@@ -117,22 +125,22 @@ def createTemplateFile(root, cmdStr, fileName, outFile, deviceType, templateType
       pCmds = ""
       for cmds in cmdList :
         pCmds = pCmds + cmds
-      
+
       print "   Executing template create action...."
 
       action = root.ntool__ntool_commands.create_template
       inp = action.get_input()
       inp.type = 'config'
-      inp.device_type = deviceType
+      inp.device_type = device_type
       inp.command_list = pCmds
       res = action(inp)
       outStr = res.result
 
-      if (outFile):
-        print "   Saving output to file %s" % outFile
+      if (out_file):
+        print "   Saving output to file %s" % out_file
         outlines = []
         outlines = outStr.splitlines()
-        file = open(outFile, "w")
+        file = open(out_file, "w")
         for outStr in outlines:
           if (outStr != "") :
             file.write(outStr + "\n")
@@ -171,9 +179,9 @@ def main(argv):
    maapi = ncs.maapi.Maapi(ip='127.0.0.1', port = port)
    maapi.attach(th, usid=usid)
    root = maagic.get_root(maapi, shared=False)
-   
+
    createTemplateFile(root, args.line, args.file, args.ofile, args.type, args.template, args.verbose)
-    
+
    print "   Template create completed"
    print " "
 

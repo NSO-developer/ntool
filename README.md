@@ -54,38 +54,84 @@ variables                   Variables are denoted by {$XXXXX}
                               - Variables which require a null check
                                 in the XML template can be assigned
                                 the initial value nonull
-+TAGMOD:tagname, value        - TAGMOD can be inserted into the cfg file
+                              - Any list index or otherwise needed value needs to have
+                                a default value assigned.
++TAGMOD:tagname::value        - TAGMOD can be inserted into the cfg file
                                 in order to substitue a value for a given
-                                element in the template.
+                                element in the template. For example to insert when="{}"" or tags="merge".
+                              - Cant handle the new if/else conditional statements (yet?)
 +VARMOD:variable name::value  - If you need to generate templates for model-to-model
                                 service you can use the VARMOD to subsitute out
                                 variable names for a model name
 ```
 Consider the following example:
 
-bridge_group.cfg:
+You have a service package called interface, create a cli directory inside there and store your interface.cfg files there.
 ```
-+NED:cisco-iosxr            First line of every .cfg file is the NED required
+mkdir packages/interface/cli
+cp interface.cfg packages/interface/cli
+```
 
-l2vpn
-  bridge group {$BG-NAME}
-   bridge-domain {$BG-NAME}
-    mac
-      withdraw state-down
-    exit
-    mtu 9800
-    vfi {$BG-NAME}
-     vpn-id {$VPN-ID=34}
-     autodiscovery bgp
-      rd auto
-      route-target {$BG-ROUTE-TARGET}
-     exit
-    exit
-   exit
+interface.cfg:
+```
++NED:cisco-ios
++TAGMOD:bgp::when="{/enable-bgp}"
++VARMOD:DESCRIPTION::/description
+
+interface GigabitEthernet{$INTERFACE=0/1}
+  description {$DESCRIPTION=empty}
+  ip address {$IPADDRESS=192.168.216.1} 255.255.255.0
   exit
-exit
+router bgp 65001
+  neighbor 10.2.1.2 remote-as {$AS=100}
+  neighbor 10.2.1.2 activate
+  redistribute connected
+ !
+
 ```
 
+```
+admin@ncs> ntool cli template package interface
+....
+         <config-template xmlns="http://tail-f.com/ns/config/1.0">
+           <devices xmlns="http://tail-f.com/ns/ncs">
+           <device>
+             <name>{$DEVICE}</name>
+               <config>
+                 <interface xmlns="urn:ios">
+                   <GigabitEthernet>
+                     <name>{$INTERFACE}</name>
+                     <description>{/description}</description>
+                     <ip>
+                       <address>
+                         <primary>
+                           <address>{$IPADDRESS}</address>
+                           <mask>255.255.255.0</mask>
+                         </primary>
+                       </address>
+                     </ip>
+                   </GigabitEthernet>
+                 </interface>
+                 <router xmlns="urn:ios">
+                   <bgp when="{/enable-bgp}">
+                     <as-no>65001</as-no>
+                     <redistribute>
+                       <connected>
+                       </connected>
+                     </redistribute>
+                     <neighbor>
+                       <id>10.2.1.2</id>
+                       <remote-as>{$AS}</remote-as>
+                       <activate/>
+                     </neighbor>
+                   </bgp>
+                 </router>
+               </config>
+           </device>
+         </devices>
+         </config-template>
+  ....
+```
 ## Verify
 
 Any "**" means the the specific command isn't supported
