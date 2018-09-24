@@ -1,0 +1,107 @@
+[global target_dir=../../../ncs]
+
+[shell ncs]
+    [timeout 30]
+    [progress \nStop NSO\n]
+    !make stop
+    !echo ==$$?==
+    ?==0==
+    ?SH-PROMPT:
+    [progress \nStop NSO...ok\n]
+
+[shell ncs]
+    [timeout 60]
+    [progress \nBuild NSO\n]
+    !make build
+    !echo ==$$?==
+    ?==0==
+    ?SH-PROMPT:
+    [progress \nBuild NSO...ok\n]
+
+[shell ncs]
+    [timeout 130]
+    [progress \nStart NSO\n]
+    #!cd ${target_dir}
+    !make start
+    ?SH-PROMPT:
+    !echo ==$$?==
+    ?==0==
+    ?SH-PROMPT:
+    [progress \nStart NSO...ok\n]
+
+[shell ncs-cli]
+    [timeout 25]
+    [progress \nrequest packages reload\n]
+    !cd ${target_dir}
+    !ncs_cli -u admin
+    ?.*>
+    !request packages reload
+    ?.*>
+    [progress \nrequest packages reload...ok\n]
+
+[shell ncs-cli]
+    [timeout 30]
+    [progress \nntool cli template package l3vpn\n]
+    !ntool cli template package l3vpn
+    ?.*Parsing \[ios.cfg\] .* Success
+    ?.*Generating template from \[ios.cfg\] .* Success
+    ?.*Saving template file \[ios.xml\] .* Success
+    ?Completed
+    ?.*>
+    [progress \nntool cli template package l3vpn...ok\n]
+
+    [progress \nntool cli template package l3vpn debug\n]
+    !ntool cli template package l3vpn debug
+    ?.*Parsing \[ios-with-variables.cfg\] .* Success
+    ?.*Template with variable substituion.*
+
+    ?.*<name>\{\$$INTERFACE}</name>.*
+    ?.*<description>{/description}</description>
+    ?.*<address>\{\$$IPADDRESS}</address>
+    ?.*<bgp when="{/enable-bgp}">
+    ?.*<remote-as>\{\$$AS}</remote-as>
+
+    ?.*Saving template file \[ios-with-variables.xml\] .* Success
+    ?Completed
+    ?admin@ncs>
+    [progress \nntool cli template package l3vpn debug...ok\n]
+
+    [progress \nntool verify type cisco-ios file packages/ntool/test/payloads/ios.cfg\n]
+    !ntool verify type cisco-ios file packages/ntool/test/payloads/ios.cfg
+    ?.*NED:cisco-ios
+    ?\s+interface GigabitEthernet0/1
+    ?\s+router bgp 65001
+    ?.*Verification completed
+    ?.*>
+    [progress \nntool verify type cisco-ios file packages/ntool/test/payloads/ios.cfg...ok\n]
+
+    [progress \nntool verify type cisco-ios command "interface GigabitEthernet0/1"\n]
+    !ntool verify type cisco-ios command "interface GigabitEthernet0/1"
+    ?\s+interface GigabitEthernet0/1
+    ?\s+Verification completed
+    ?.*>
+    [progress \nntool verify type cisco-ios command "interface GigabitEthernet0/1"...ok\n]
+
+    [progress \nntool verify type cisco-ios command Fail\n]
+    !ntool verify type cisco-ios command "interface Fail"
+    ?\*\* interface Fail
+    ?\s+Verification completed
+    ?.*>
+    [progress \nntool verify type cisco-ios command Fail...ok\n]
+
+#[shell ncs-cli]
+#    [progress \nDelete service volvo\n]
+#    !configure
+#    ?admin@ncs%
+#    !delete vlan volvo
+#    ?admin@ncs%
+#    !commit
+#    ?admin@ncs%
+#    [progress \nDelete service volvo...ok\n]
+
+[cleanup]
+    !cd ${target_dir}
+    !make stop
+    !echo ==$$?==
+    ?==0==
+    ?SH-PROMPT:

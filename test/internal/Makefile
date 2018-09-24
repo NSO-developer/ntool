@@ -10,6 +10,11 @@ test:
 	  $(MAKE) -C $$d test || exit 1; \
 	done
 
+build:
+	@for d in $(DIRS) ; do \
+	  $(MAKE) -C $$d build || exit 1; \
+	done
+
 desc:
 	@for d in $(DIRS) ; do \
 	  $(MAKE) -C $$d desc || exit 1; \

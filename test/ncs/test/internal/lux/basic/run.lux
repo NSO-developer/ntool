@@ -1,0 +1,19 @@
+[doc A simple NCS Project test]
+# This lux test is intended to be used as a template for further test writing.
+
+[global TOP_DIR=../../../../..]
+
+[shell startup]
+    [timeout 60]
+    [progress Start NCS and verify startup]
+    !cd ${TOP_DIR}
+    ?SH-PROMPT:
+    !make start
+    ?SH-PROMPT:
+    !echo ==$$?==
+    ?==0==
+
+[cleanup]
+    [progress Cleanup is always run after testing]
+    !echo "OK"
+    ?SH-PROMPT:

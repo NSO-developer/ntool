@@ -1,0 +1,15 @@
+This directory is an NCS project directory.
+
+The directory content in /Users/hniska/stash.tail-f.com/selftest/test/nso has been generated through
+the invocation of:
+
+# /Users/hniska/ncs-release/4.5.5/bin/ncs-setup --dest /Users/hniska/stash.tail-f.com/selftest/test/nso
+
+The following commands can be used to interact with NCS in this directory:
+
+# ncs -c ./ncs.conf                         -- to start NCS as a daemon
+# ncs -c ./ncs.conf --foreground --verbose  -- start NCS in foregound
+# ncs --stop                                -- stop NCS
+# ncs_cli -u admin                          -- start a CLI into NCS
+# ncs-setup --eclipse-setup                 -- create eclipse dev files here
+

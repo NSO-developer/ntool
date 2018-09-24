@@ -1,0 +1,58 @@
+<project-meta-data xmlns="http://tail-f.com/ns/ncs-project">
+  <name>nso</name>
+  <project-version>1.0</project-version>
+  <description>Skeleton for a NCS project</description>
+
+  <!--package>
+    <name>cisco-ios</name>
+    <git>
+      <repo>ssh://git@stash.tail-f.com/ned/cisco-ios.git</repo>
+      <branch>develop</branch>
+    </git>
+  </package>
+  <package>
+    <name>cisco-iosxr</name>
+    <git>
+      <repo>ssh://git@stash.tail-f.com/ned/cisco-iosxr.git</repo>
+      <branch>develop</branch>
+    </git>
+  </package>
+  <package>
+    <name>alu-sr</name>
+    <git>
+      <repo>ssh://git@stash.tail-f.com/ned/alu-sr.git</repo>
+      <branch>develop</branch>
+    </git>
+  </package>
+  <package>
+    <name>huawei-vrp</name>
+    <git>
+      <repo>ssh://git@stash.tail-f.com/ned/huawei-vrp.git</repo>
+      <branch>develop</branch>
+    </git>
+  </package-->
+
+  <netsim>
+     <device>
+       <name>cisco-iosxr</name>
+       <prefix>xr</prefix>
+       <num-devices>1</num-devices>
+     </device>
+     <device>
+       <name>cisco-ios</name>
+       <prefix>c</prefix>
+       <num-devices>1</num-devices>
+     </device>
+     <!--device>
+       <name>huawei-vrp</name>
+       <prefix>h</prefix>
+       <num-devices>1</num-devices>
+     </device-->
+     <device>
+       <name>alu-sr</name>
+       <prefix>a</prefix>
+       <num-devices>1</num-devices>
+     </device>
+   </netsim>
+
+</project-meta-data>

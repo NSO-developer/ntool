@@ -45,7 +45,7 @@ def getPrefixList():
 def print_ncs_command_details():
         print """
         begin command
-            modes: oper config
+            modes: oper
             styles: c i j
             cmdpath: ntool cli template
             help: Auto render an NSO config template
@@ -292,7 +292,7 @@ class generateCliTemplate:
         mod = '+TAGMOD:'
         tagList = {}
         for line in self.lines:
-           if line.startswith(mod):
+           if line.startswith(mod) and '::' in line:
               subStr = line.replace(mod, "")
               tags = subStr.split("::")
               tagList[tags[0]] = tags[1]
@@ -311,7 +311,7 @@ class generateCliTemplate:
         varSubList = {}
         mod = '+VARMOD:'
         for line in self.lines:
-           if line.startswith(mod):
+           if line.startswith(mod) and '::' in line:
               subStr = line[len(mod):]
               tags = subStr.split("::")
               varSubList[tags[0]] = tags[1]
