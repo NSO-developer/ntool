@@ -19,9 +19,9 @@ import argparse
 import re
 import os
 
-prefixList = {'cisco-ios': 'ios', 'cisco-iosxr' : 'cisco-ios-xr', 'arista-dcs' : 'dcs',
-              'adva-825' : 'adva-825', 'adtran-aos' : 'adtran-aos', 'alu-sr': 'alu',
-              'cisco-nx' : 'nx', 'unknown' : 'unknown'}
+prefixList = {'cisco-ios': 'ios', 'cisco-iosxr': 'cisco-ios-xr', 'arista-dcs': 'dcs',
+              'adva-825': 'adva-825', 'adtran-aos': 'adtran-aos', 'alu-sr': 'alu',
+              'cisco-nx': 'nx', 'huawei-vrp': 'vrp', 'unknown': 'unknown'}
 
 def print_ncs_command_details():
     print """
@@ -43,7 +43,7 @@ def print_ncs_command_details():
           name: type
           presence: mandatory
           flag: -t
-          help: cisco-ios, cisco-iosxr, cisco-nx, arista-dcs, alu-sr
+          help: cisco-ios, cisco-iosxr, cisco-nx, arista-dcs, alu-sr, huawei-vrp
         end
 
         begin param
@@ -128,7 +128,6 @@ def verify_line(pc, dev_type):
             or pc == dev_type + ":license udi\n" \
             or pc == dev_type + ":end\n" \
             or pc == dev_type + ":exit":
-
         return False
     else:
         return True
@@ -189,11 +188,11 @@ def verify_command_file(root, cmd_str, file_name, device_type, verbose):
             process_cmds.append(mod)
             index += 1
         else:
-            if banner or (mod != "\n" and mod != "\r" and mod != "!" and mod != ""):
-                if mod.find("description") != -1:
-                    if mod.find("|") != -1:
+            if banner or (mod != "\n" and mod != "\r" and mod != "!" and mod != "" and mod != "#\n"):
+                if mod.find("description"):
+                    if mod.find("|"):
                         mod = mod.replace("|", "\|")
-                    elif mod.find(";") != -1:
+                    elif mod.find(";"):
                         mod = mod.replace(";", "\;")
                 process_cmds[index] = process_cmds[index] + mod
 
@@ -229,7 +228,7 @@ def main(argv):
     parser.add_argument("-c", "--command", action='store_true', dest='command', help="command")
     parser.add_argument("-f", "--file", action='store', dest='file', help="Configuration file to verify")
     parser.add_argument("-l", "--line", action='store', dest='line', help="line")
-    parser.add_argument("-t", "--type", action='store', dest='type', help="cisco-ios, cisco-iosxr, cisco-nx, arista-dcs")
+    parser.add_argument("-t", "--type", action='store', dest='type', help="cisco-ios, cisco-iosxr, cisco-nx, arista-dcs, huawei-vrp")
     parser.add_argument("-v", "--verbose", action='store_true', dest='verbose', help="verbose")
     args = parser.parse_args()
 
