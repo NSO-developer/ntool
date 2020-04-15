@@ -1,0 +1,76 @@
+module ntool {
+  namespace "http://com/tailf/ntool";
+  prefix ntool;
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import tailf-common {
+    prefix tailf;
+  }
+  import tailf-ncs {
+    prefix ncs;
+  }
+
+  container ntool-commands {
+     tailf:info "NED Tool Command Actions";
+     config false;
+
+    /////////////////////////////////////////////////////
+    // verify action
+    /////////////////////////////////////////////////////
+    tailf:action verify {
+      tailf:actionpoint ntool-verify-action-point;
+      input {
+        leaf ned-id {
+           type string;
+           mandatory true;
+        }
+        leaf command-list {
+           type string;
+            mandatory true;
+        }
+      }
+      output {
+         leaf result {
+           type string;
+         }
+         leaf status {
+            type string;
+         }
+      }
+    } //verify
+    tailf:action create-template {
+      tailf:actionpoint ntool-template-action-point;
+      input {
+        leaf type {
+           type enumeration {
+              enum 'config';
+              enum 'device';
+           }
+           default "device";
+        }
+        leaf name {
+           type string;
+           default "DEFAULT";
+        }
+        leaf ned-id {
+           type string;
+           mandatory true;
+        }
+        leaf command-list {
+           type string;
+           mandatory true;
+        }
+      }
+      output {
+         leaf result {
+           type string;
+         }
+         leaf status {
+            type string;
+         }
+      }
+    } //create-template
+  } //ntool-commands
+}

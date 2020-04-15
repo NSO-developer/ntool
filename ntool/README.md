@@ -263,3 +263,27 @@ Template create completed
 [ok][2020-04-15 17:04:25]
 admin@ncs>
 ```
+
+The next example provide shows how the template can be generated 
+programmatically using the NSO RESTCONF API where the input data in the 
+template.json file is show prior to the curl command
+
+```
+dan@DANISULL-M-73NJ % cat template.json
+{
+   "input" : {
+      "ned-id" : "cisco-ios-cli-6.48",
+      "command-list" : "aaa group server radius ISE\\n server name ISE-VIP-HKCM\\n!\\naaa authentication login aux group tacacs+ local\\naaa authentication login vty group tacacs+ local\\n"
+   }
+}
+dan@DANISULL-M-73NJ % 
+
+
+dan@DANISULL-M-73NJ % curl -X POST -u admin:admin -T template.json --header "Content-Type: application/yang-data+json" http://127.0.0.1:8080/restconf/operations/ntool:ntool-commands/create-template
+{
+  "ntool:output": {
+    "result": "<config xmlns=\"http://tail-f.com/ns/config/1.0\">\n  <devices xmlns=\"http://tail-f.com/ns/ncs\">\n  <template>\n    <name>TEMP-NAME</name>\n      <ned-id>\n       <id>cisco-ios-cli-6.48</id>\n      <config>\n        <aaa xmlns=\"urn:ios\">\n          <group>\n            <server>\n              <radius>\n                <name>ISE\n</name>\n                <server>\n                  <name>\n                    <name>ISE-VIP-HKCM\n</name>\n                  </name>\n                </server>\n              </radius>\n            </server>\n          </group>\n        </aaa>\n      </config>\n     </ned-id>\n    </template>\n   </devices>\n</config>",
+    "status": "success"
+  }
+}
+```
