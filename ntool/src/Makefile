@@ -28,7 +28,9 @@ $(DIRS):
 	cp ../ntool_modules/ntool_template.py ../python/
 	@echo "Copying ntool_template.py and ntool_verify to ../scripts/command"
 	cp ../ntool_modules/ntool_template.py ../scripts/command/
+	chmod 755 ../scripts/command/ntool_template.py
 	cp ../ntool_modules/ntool_verify.py ../scripts/command/
+	chmod 755 ../scripts/command/ntool_verify.py
 	
 
 clean:
