@@ -1,6 +1,6 @@
 # tail-ntool
   
-A few tools to help with verifying CLI configurations and generating NSO templates
+(NSO 5.2+) A few tools to help with verifying CLI configurations and generating NSO templates
 
 # Purpose
 
